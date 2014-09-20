@@ -7,7 +7,7 @@
 //
 
 #import "OnboardingContentViewController.h"
-#import "OnboardingViewController.h"
+#import "LoopingVideoView.h"
 
 static NSString * const kDefaultOnboardingFont = @"Helvetica-Light";
 
@@ -31,7 +31,7 @@ static CGFloat const kMainPageControlHeight = 35;
 
 @implementation OnboardingContentViewController
 
-- (id)initWithTitle:(NSString *)title body:(NSString *)body image:(UIImage *)image buttonText:(NSString *)buttonText action:(dispatch_block_t)action {
+- (id)initWithTitle:(NSString *)title body:(NSString *)body movie:(NSString *)movie buttonText:(NSString *)buttonText action:(dispatch_block_t)action {
     self = [super init];
 
     // hold onto the passed in parameters, and set the action block to an empty block
@@ -39,7 +39,7 @@ static CGFloat const kMainPageControlHeight = 35;
     // calling
     _titleText = title;
     _body = body;
-    _image = image;
+    _videoURL = [[NSBundle mainBundle] URLForResource:movie withExtension:@"mp4"];
     _buttonText = buttonText;
     _actionHandler = action ?: ^{};
     
@@ -67,28 +67,16 @@ static CGFloat const kMainPageControlHeight = 35;
 }
 
 - (void)viewWillAppear:(BOOL)animated {
-    [super viewWillAppear:animated];
-    
-    // if we have a delegate set, mark ourselves as the next page now that we're
-    // about to appear
-    if (self.delegate) {
-        [self.delegate setNextPage:self];
-    }
+    [_videoView play];
 }
 
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
-    
-    // if we have a delegate set, mark ourselves as the current page now that
-    // we've appeared
-    if (self.delegate) {
-        [self.delegate setCurrentPage:self];
-    }
+- (void)viewWillDisappear:(BOOL)animated {
+    [_videoView pause];
 }
 
 - (void)generateView {
     // we want our background to be clear so we can see through it to the image provided
-    self.view.backgroundColor = [UIColor clearColor];
+    self.view.backgroundColor = [UIColor blackColor];
     
     // do some calculation for some common values we'll need, namely the width of the view,
     // the center of the width, and the content width we want to fill up, which is some
@@ -98,53 +86,47 @@ static CGFloat const kMainPageControlHeight = 35;
     CGFloat contentWidth = viewWidth * kContentWidthMultiplier;
     
     // create the image view with the appropriate image, size, and center in on screen
-    _imageView = [[UIImageView alloc] initWithImage:_image];
-    [_imageView setFrame:CGRectMake(horizontalCenter - (self.iconSize / 2), self.topPadding, self.iconSize, self.iconSize)];
-    [self.view addSubview:_imageView];
+    UIImageView *imageView = [[UIImageView alloc] initWithImage:nil];
+    [imageView setFrame:CGRectMake(horizontalCenter - (self.iconSize / 2), self.topPadding, self.iconSize, self.iconSize)];
+    //[self.view addSubview:imageView];
+    _videoView = [[LoopingVideoView alloc] initWithURL:_videoURL];
+    _videoView.frame = self.view.bounds;
+    _videoView.alpha = 0.5;
+    [self.view addSubview:_videoView];
+    
     
     // create and configure the main text label sitting underneath the icon with the provided padding
-    _mainTextLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, CGRectGetMaxY(_imageView.frame) + self.underIconPadding, contentWidth, 0)];
-    _mainTextLabel.text = _titleText;
-    _mainTextLabel.textColor = self.titleTextColor;
-    _mainTextLabel.font = [UIFont fontWithName:self.fontName size:self.titleFontSize];
-    _mainTextLabel.numberOfLines = 0;
-    _mainTextLabel.textAlignment = NSTextAlignmentCenter;
-    [_mainTextLabel sizeToFit];
-    _mainTextLabel.center = CGPointMake(horizontalCenter, _mainTextLabel.center.y);
-    [self.view addSubview:_mainTextLabel];
+    UILabel *mainTextLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, CGRectGetMaxY(imageView.frame) + self.underIconPadding, contentWidth, 0)];
+    mainTextLabel.text = _titleText;
+    mainTextLabel.textColor = self.titleTextColor;
+    mainTextLabel.font = [UIFont fontWithName:self.fontName size:self.titleFontSize];
+    mainTextLabel.numberOfLines = 0;
+    mainTextLabel.textAlignment = NSTextAlignmentCenter;
+    [mainTextLabel sizeToFit];
+    mainTextLabel.center = CGPointMake(horizontalCenter, mainTextLabel.center.y);
+    [self.view addSubview:mainTextLabel];
     
     // create and configure the sub text label
-    _subTextLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, CGRectGetMaxY(_mainTextLabel.frame) + self.underTitlePadding, contentWidth, 0)];
-    _subTextLabel.text = _body;
-    _subTextLabel.textColor = self.bodyTextColor;
-    _subTextLabel.font = [UIFont fontWithName:self.fontName size:self.bodyFontSize];
-    _subTextLabel.numberOfLines = 0;
-    _subTextLabel.textAlignment = NSTextAlignmentCenter;
-    [_subTextLabel sizeToFit];
-    _subTextLabel.center = CGPointMake(horizontalCenter, _subTextLabel.center.y);
-    [self.view addSubview:_subTextLabel];
+    UILabel *subTextLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, CGRectGetMaxY(mainTextLabel.frame) + self.underTitlePadding, contentWidth, 0)];
+    subTextLabel.text = _body;
+    subTextLabel.textColor = self.bodyTextColor;
+    subTextLabel.font = [UIFont fontWithName:self.fontName size:self.bodyFontSize];
+    subTextLabel.numberOfLines = 0;
+    subTextLabel.textAlignment = NSTextAlignmentCenter;
+    [subTextLabel sizeToFit];
+    subTextLabel.center = CGPointMake(horizontalCenter, subTextLabel.center.y);
+    [self.view addSubview:subTextLabel];
     
     // create the action button if we were given button text
     if (_buttonText) {
-        _actionButton = [[UIButton alloc] initWithFrame:CGRectMake((CGRectGetMaxX(self.view.frame) / 2) - (contentWidth / 2), CGRectGetMaxY(self.view.frame) - kMainPageControlHeight - kActionButtonHeight - self.bottomPadding, contentWidth, kActionButtonHeight)];
-        _actionButton.titleLabel.font = [UIFont systemFontOfSize:24];
-        [_actionButton setTitle:_buttonText forState:UIControlStateNormal];
-        [_actionButton setTitleColor:self.buttonTextColor forState:UIControlStateNormal];
-        [_actionButton addTarget:self action:@selector(handleButtonPressed) forControlEvents:UIControlEventTouchUpInside];
-        [self.view addSubview:_actionButton];
+        UIButton *actionButton = [[UIButton alloc] initWithFrame:CGRectMake((CGRectGetMaxX(self.view.frame) / 2) - (contentWidth / 2), CGRectGetMaxY(self.view.frame) - kMainPageControlHeight - kActionButtonHeight - self.bottomPadding, contentWidth, kActionButtonHeight)];
+        actionButton.titleLabel.font = [UIFont systemFontOfSize:24];
+        [actionButton setTitle:_buttonText forState:UIControlStateNormal];
+        [actionButton setTitleColor:self.buttonTextColor forState:UIControlStateNormal];
+        [actionButton addTarget:self action:@selector(handleButtonPressed) forControlEvents:UIControlEventTouchUpInside];
+        [self.view addSubview:actionButton];
     }
 }
-
-
-#pragma mark - Transition alpha
-
-- (void)updateAlphas:(CGFloat)newAlpha {
-    _imageView.alpha = newAlpha;
-    _mainTextLabel.alpha = newAlpha;
-    _subTextLabel.alpha = newAlpha;
-    _actionButton.alpha = newAlpha;
-}
-
 
 #pragma mark - action button callback
 

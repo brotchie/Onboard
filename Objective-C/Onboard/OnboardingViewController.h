@@ -7,27 +7,16 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "OnboardingContentViewController.h"
 
-@interface OnboardingViewController : UIViewController <UIPageViewControllerDataSource, UIPageViewControllerDelegate, UIScrollViewDelegate> {
+@interface OnboardingViewController : UIViewController <UIPageViewControllerDataSource, UIPageViewControllerDelegate> {
     UIImage *_backgroundImage;
     UIPageViewController *_pageVC;
     UIPageControl *_pageControl;
     NSArray *_viewControllers;
-    UIButton *_skipButton;
-    
-    OnboardingContentViewController *_currentPage;
-    OnboardingContentViewController *_upcomingPage;
 }
 
-// Masking, blurring, fading, etc.
 @property (nonatomic) BOOL shouldMaskBackground;
 @property (nonatomic) BOOL shouldBlurBackground;
-@property (nonatomic) BOOL shouldFadeTransitions;
-
-// Skipping
-@property (nonatomic) BOOL allowSkipping;
-@property (nonatomic, strong) dispatch_block_t skipHandler;
 
 ////////////////////////////////////////////////////////////////////
 // These are convenience properties for content view customization, so you
@@ -51,9 +40,6 @@
 ////////////////////////////////////////////////////////////////////
 
 - (id)initWithBackgroundImage:(UIImage *)backgroundImage contents:(NSArray *)contents;
-
-- (void)setCurrentPage:(OnboardingContentViewController *)currentPage;
-- (void)setNextPage:(OnboardingContentViewController *)nextPage;
 
 
 // Getters for tests only

@@ -8,22 +8,18 @@
 
 #import <UIKit/UIKit.h>
 
-@class OnboardingViewController;
+@class LoopingVideoView;
 
 @interface OnboardingContentViewController : UIViewController {
     NSString *_titleText;
     NSString *_body;
-    UIImage *_image;
+    //UIImage *_image;
+    NSURL *_videoURL;
+    LoopingVideoView *_videoView;
+    
     NSString *_buttonText;
     dispatch_block_t _actionHandler;
-    
-    UIImageView *_imageView;
-    UILabel *_mainTextLabel;
-    UILabel *_subTextLabel;
-    UIButton *_actionButton;
 }
-
-@property (nonatomic, weak) OnboardingViewController *delegate;
 
 @property (nonatomic) CGFloat iconSize;
 
@@ -40,8 +36,6 @@
 @property (nonatomic) CGFloat underTitlePadding;
 @property (nonatomic) CGFloat bottomPadding;
 
-- (id)initWithTitle:(NSString *)title body:(NSString *)body image:(UIImage *)image buttonText:(NSString *)buttonText action:(dispatch_block_t)action;
-
-- (void)updateAlphas:(CGFloat)newAlpha;
+- (id)initWithTitle:(NSString *)title body:(NSString *)body movie:(NSString *)movie buttonText:(NSString *)buttonText action:(dispatch_block_t)action;
 
 @end

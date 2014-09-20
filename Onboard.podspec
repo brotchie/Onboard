@@ -9,7 +9,7 @@ Pod::Spec.new do |s|
   s.social_media_url   = "http://twitter.com/MikeAmaral"
   s.platform     = :ios
   s.source       = { :git => "https://github.com/mamaral/Onboard.git", :tag => "v1.1" }
-  s.source_files  = "Objective-C/Onboard/OnboardingViewController.{h,m}", "Objective-C/Onboard/OnboardingContentViewController.{h,m}"
+  s.source_files  = "Objective-C/Onboard/OnboardingViewController.{h,m}", "Objective-C/Onboard/OnboardingContentViewController.{h,m}", "Objective-C/Onboard/LoopingVideoView.{h,m}"
   s.requires_arc = true
 
 end
